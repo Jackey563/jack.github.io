@@ -1,37 +1,35 @@
 @echo off
 cd /d "%~dp0"
-echo === 开始同步 ===
+echo === Start sync ===
 
-:: 1. 把本地所有改动/新增加入缓存
+:: add all changes (include delete)
 git add -A
 
-:: 2. 如果没有可提交内容就跳过 commit
+:: skip commit if nothing changed
 git diff --cached --quiet
 if %errorlevel%==0 (
-  echo 没有新文件，直接拉取远程更新...
+  echo No changes, pull only...
   goto :pull
 )
 
-:: 3. 有变动则提交并推送
-set /p msg=请输入提交信息（直接回车=默认“update”）:
+:: commit & push
+set /p msg=Enter commit message (default=update):
 if "%msg%"=="" set msg=update
 git commit -m "%msg%"
 git push
 if %errorlevel% neq 0 (
-  echo 推送失败，请检查网络或权限！
+  echo Push failed! Check network or permission.
   pause & exit /b 1
 )
 
-echo 推送完成，正在拉回云端可能的新文件...
+echo Push done, pulling cloud updates...
 
 :pull
-git pull --no-edit
+git pull --no-edit --rebase
 if %errorlevel% neq 0 (
-  echo 拉取失败，请检查冲突或网络！
+  echo Pull failed! Check conflicts or network.
   pause & exit /b 1
 )
 
-:: 保险：最后再拉一次，防止 Actions 抢先
-git pull --no-edit --rebase
-echo === 同步完成！===
+echo === Sync complete! ===
 pause
