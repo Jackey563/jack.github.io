@@ -31,5 +31,7 @@ if %errorlevel% neq 0 (
   pause & exit /b 1
 )
 
+:: 保险：最后再拉一次，防止 Actions 抢先
+git pull --no-edit --rebase
 echo === 同步完成！===
 pause
