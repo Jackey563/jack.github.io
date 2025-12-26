@@ -1,0 +1,31 @@
+name: Auto Generate Index
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate index-of.html
+        run: |
+          echo '<!doctype html><html lang="zh-CN"><head>' > index-of.html
+          echo '<meta charset="utf-8"><title>站点自动目录</title>' >> index-of.html
+          echo '<style>body{font-family:system-ui;margin:2rem}li{margin:.25rem 0}</style>' >> index-of.html
+          echo '</head><body><h1>自动目录</h1><ul>' >> index-of.html
+          # 递归找所有 html 文件，去掉 index-of.html 本身
+          find . -type f -iname '*.html' ! -name 'index-of.html' | sort | while read f; do
+            # 把 ./path/file.html 转成相对 URL
+            url="${f#./}"
+            echo "<li><a href=\"$url\">$url</a></li>" >> index-of.html
+          done
+          echo '</ul><p style="color:#666;font-size:.8rem">自动生成于 '$GITHUB_RUN_NUMBER' 次部署</p>' >> index-of.html
+          echo '</body></html>' >> index-of.html
+      - name: Commit & push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index-of.html
+          git diff --cached --quiet || (git commit -m "auto gen index" && git push)
